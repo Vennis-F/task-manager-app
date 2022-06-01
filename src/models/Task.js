@@ -3,7 +3,7 @@ var uniqueValidator = require("mongoose-unique-validator")
 const validator = require("validator")
 
 //schema
-const TaskScheme = mongoose.Schema({
+const taskSchema = mongoose.Schema({
   description: {
     type: String,
     required: true,
@@ -14,9 +14,9 @@ const TaskScheme = mongoose.Schema({
     default: false,
   },
 })
-TaskScheme.plugin(uniqueValidator)
+taskSchema.plugin(uniqueValidator)
 
 //Model
-const Task = mongoose.model("Task", TaskScheme)
+const Task = mongoose.model("Task", taskSchema)
 
 module.exports = Task
