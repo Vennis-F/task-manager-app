@@ -1,6 +1,6 @@
 const router = require("express").Router()
-const { findById } = require("../models/user")
 const User = require("../models/user")
+const auth = require("../middlewares/auth")
 
 //POST /users
 router.post("/", async (req, res) => {
@@ -14,14 +14,47 @@ router.post("/", async (req, res) => {
   }
 })
 
+//POST /logout
+router.post("/logout", auth, async (req, res) => {
+  try {
+    req.user.tokens = req.user.tokens.filter(
+      (token) => token.token !== req.token
+    )
+    await req.user.save({ validateModifiedOnly: true })
+
+    res.send()
+  } catch (e) {
+    console.log(e)
+    res.status(500).send()
+  }
+})
+
+//POST /logout
+router.post("/logoutAll", auth, async (req, res) => {
+  try {
+    req.user.tokens = []
+    await req.user.save({ validateModifiedOnly: true })
+
+    res.send()
+  } catch (e) {
+    console.log(e)
+    res.status(500).send()
+  }
+})
+
 //GET /users
-router.get("/", async (req, res) => {
+router.get("/", auth, async (req, res) => {
   try {
     const users = await User.find()
     res.send(users)
   } catch (error) {
     res.status(500).send(error)
   }
+})
+
+//GET /me
+router.get("/me", auth, async (req, res) => {
+  res.send(req.user)
 })
 
 //GET /users/:id
@@ -53,7 +86,7 @@ router.patch("/:id", async (req, res) => {
 
   try {
     //Find user and Check user exist
-    const user = findById(_id)
+    const user = await User.findById(_id)
     if (!user) return res.status(404).send()
 
     //Update user
@@ -64,7 +97,7 @@ router.patch("/:id", async (req, res) => {
   } catch (error) {
     if (error.name === "CastError" && error.kind === "ObjectId")
       return res.status(400).send({ error: "Invalid ID" })
-    res.status(400).send(error)
+    res.status(400).send({ error: error.message })
   }
 })
 

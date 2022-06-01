@@ -20,7 +20,7 @@ const userSchema = mongoose.Schema({
   email: {
     type: String,
     required: true,
-    uique: true,
+    unique: true,
     trim: true,
     lowercase: true,
     validate(data) {
@@ -49,6 +49,15 @@ const userSchema = mongoose.Schema({
 userSchema.plugin(uniqueValidator)
 
 //method Model and method Instance
+userSchema.methods.toJSON = function () {
+  const user = this
+  const userObject = user.toObject()
+
+  delete userObject.password
+  delete userObject.tokens
+
+  return userObject
+}
 userSchema.methods.generateAuthToken = async function () {
   const user = this
   const token = await jwt.sign({ _id: user._id }, "SEC_JWT")
@@ -61,7 +70,7 @@ userSchema.methods.generateAuthToken = async function () {
 }
 userSchema.statics.findByCredentials = async (email, password) => {
   //Check email
-  const user = User.findOne({ email })
+  const user = await User.findOne({ email })
   if (!user) throw new Error("Unable to login")
 
   //Check password
