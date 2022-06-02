@@ -4,6 +4,10 @@ const validator = require("validator")
 
 //schema
 const taskSchema = mongoose.Schema({
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+  },
   description: {
     type: String,
     required: true,

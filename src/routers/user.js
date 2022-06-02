@@ -29,7 +29,7 @@ router.post("/logout", auth, async (req, res) => {
   }
 })
 
-//POST /logout
+//POST /logoutAll
 router.post("/logoutAll", auth, async (req, res) => {
   try {
     req.user.tokens = []
@@ -52,13 +52,13 @@ router.get("/", auth, async (req, res) => {
   }
 })
 
-//GET /me
+//GET /users/me
 router.get("/me", auth, async (req, res) => {
   res.send(req.user)
 })
 
 //GET /users/:id
-router.get("/:id", async (req, res) => {
+router.get("/:id", auth, async (req, res) => {
   let _id = req.params.id.trim()
 
   try {
@@ -74,8 +74,28 @@ router.get("/:id", async (req, res) => {
   }
 })
 
+//PATCH /users/me
+router.patch("/me", auth, async (req, res) => {
+  const updates = Object.keys(req.body)
+  const allowUpdateds = ["name", "age", "email", "password"]
+
+  //Check valid update
+  const isValid = updates.every((update) => allowUpdateds.includes(update))
+  if (!isValid) return res.status(400).send({ error: "Invalid updates" })
+
+  try {
+    //Update user
+    updates.forEach((update) => (req.user[update] = req.body[update]))
+    await req.user.save({ validateModifiedOnly: true })
+
+    res.send(req.user)
+  } catch (error) {
+    res.status(400).send({ error: error.message })
+  }
+})
+
 //PATCH /users/:id
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", auth, async (req, res) => {
   const _id = req.params.id.trim()
   const updates = Object.keys(req.body)
   const allowUpdateds = ["name", "age", "email", "password"]
@@ -101,8 +121,18 @@ router.patch("/:id", async (req, res) => {
   }
 })
 
+//DELETE /users/me
+router.delete("/me", auth, async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.user._id)
+    res.send(req.user)
+  } catch (e) {
+    res.status(500).send(e.message)
+  }
+})
+
 //DELETE /users/:id
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", auth, async (req, res) => {
   const _id = req.params.id.trim()
 
   try {
